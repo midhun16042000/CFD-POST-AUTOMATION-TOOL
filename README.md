@@ -1,14 +1,16 @@
 # CFD Post Automation Tool
 
-A web-based utility to automate the generation of visualization scripts for ANSYS CFD-Post. This tool turns a repetitive, 30-minute manual task into a swift, 2-minute automated process. It is simple, but it is time-saving.
-
-**Theme:** Cyberpunk Neon
+A web-based utility to automate the generation of visualization scripts for ANSYS CFD-Post. This tool turns a repetitive, 30-minute manual task into a swift, 2-minute automated process.
 
 
+
+## Key Links
+
+* **[Live Demo](https://your-username.github.io/your-repository-name/)** * **[View Source Code (`index.html`)](https://github.com/YourUsername/your-repository-name/blob/main/index.html)**
 
 ## The Problem: Tedious & Repetitive Workflows
 
-In CFD analysis, post-processing is a critical but often time-consuming phase. Manually performing tasks like coloring boundaries, creating planes, and setting up contour plots is inefficient and prone to error. This manual process hinders productivity and leads to inconsistent report visuals.
+In CFD analysis, post-processing is a critical but often time-consuming phase. Manually performing tasks like coloring boundaries, creating planes, and setting up contour plots for every simulation is inefficient and prone to error. This manual process hinders productivity and can lead to inconsistent report visuals.
 
 ## How It Works
 
@@ -22,6 +24,8 @@ In CFD analysis, post-processing is a critical but often time-consuming phase. M
 * Tailwind CSS
 * Vanilla JavaScript
 
-## Live Demo
+## Impact & Results
 
-You can try the tool live with GitHub Pages: **[Add Your GitHub Pages Link Here]**
+* **Massive Time Savings:** Reduces post-processing setup time by over 90%.
+* **Guaranteed Consistency:** Ensures all reports and visuals follow a standardized format.
+* **Reduced Errors:** Eliminates the risk of manual mistakes during setup.
