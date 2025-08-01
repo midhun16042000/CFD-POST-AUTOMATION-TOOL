@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFD Post Automation Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- 
+        This is a single-page application designed to automate CFD post-processing tasks.
+        It uses a progressive, 4-step workflow to guide the user.
+        The UI is built with Tailwind CSS for a modern, responsive design.
+        All logic is handled with vanilla JavaScript, with no external libraries needed for functionality.
+        
+        NEW THEME: "Cyberpunk Neon"
+        - Dark purple background with a subtle grid pattern.
+        - High-contrast magenta and cyan accents.
+        - Glowing effects on panels and interactive elements.
+    -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #100c1f;
+            background-image: 
+                linear-gradient(rgba(139, 0, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 0, 255, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            text-shadow: 0 0 5px #f0f, 0 0 10px #f0f;
+        }
+        .neon-pane {
+            background: rgba(16, 12, 31, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #ff00ff;
+            border-radius: 1rem;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.4), inset 0 0 10px rgba(255, 0, 255, 0.2);
+        }
+        .output-box {
+            min-height: 200px;
+            max-height: 400px;
+            background-color: #0c0918;
+            color: #d1d5db;
+            font-family: monospace;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-y: auto;
+            border: 1px solid #4a004a;
+            resize: vertical;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: 1px solid transparent;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn-primary {
+            background: #ff00ff;
+            color: white;
+            box-shadow: 0 0 8px #ff00ff, inset 0 0 5px rgba(255, 255, 255, 0.5);
+            text-shadow: 0 0 2px #fff;
+        }
+        .btn-primary:hover {
+            background: #e600e6;
+            box-shadow: 0 0 15px #ff00ff, inset 0 0 8px rgba(255, 255, 255, 0.6);
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: #00ffff;
+            border-color: #00ffff;
+            box-shadow: 0 0 8px #00ffff;
+        }
+        .btn-secondary:hover {
+            background-color: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 15px #00ffff;
+        }
+        .control-input {
+            background-color: #1c1132;
+            border: 1px solid #4a004a;
+            color: #e5e7eb;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+        .control-input:focus {
+            outline: none;
+            border-color: #ff00ff;
+            box-shadow: 0 0 5px #ff00ff;
+        }
+        .control-input:disabled {
+            background-color: #322357;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 9999px;
+            transition: all 0.2s;
+        }
+        .delete-btn:hover {
+            color: #ff00ff;
+            transform: scale(1.1);
+        }
+        .fade-in {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-slate-200">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-12">
+            <h1 class="orbitron text-4xl md:text-5xl font-bold text-white tracking-wider">CFD Post Automation Tool</h1>
+            <p class="text-lg text-cyan-300 mt-3">Generate complex visualization scripts in just a few clicks.</p>
+        </header>
+
+        <main class="space-y-12">
+            <!-- Step 1: Input Section -->
+            <section id="step1" class="neon-pane p-6 md:p-8">
+                <div class="flex items-center mb-4">
+                    <div class="bg-fuchsia-500 text-white rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl mr-4 border-2 border-white/50">1</div>
+                    <div>
+                        <h2 class="text-2xl font-semibold text-white">Obtain & Paste Input Data</h2>
+                        <p class="text-slate-400">Start by getting the base data from your current CFD Post session.</p>
+                    </div>
+                </div>
+                <div class="prose prose-invert prose-sm text-slate-300 max-w-none bg-black/30 p-4 rounded-md border border-fuchsia-500/50">
+                    <ol>
+                        <li>In ANSYS CFD-Post, load your results file (`.dat` or `.res`).</li>
+                        <li>In the session tree, right-click the loaded results file and select <strong>"Edit in Command Editor"</strong>.</li>
+                        <li>Copy the entire content from the Command Editor window.</li>
+                        <li>Paste the copied content into the text area below.</li>
+                    </ol>
+                </div>
+                <textarea id="inputText" class="w-full mt-4 h-60 bg-black/50 border border-fuchsia-500/50 rounded-md p-3 text-slate-300 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500" placeholder="Paste content from Command Editor here..."></textarea>
+                <div class="mt-6 text-center">
+                    <button id="extractBtn" class="btn btn-primary w-full md:w-auto">Extract Names</button>
+                </div>
+            </section>
+
+            <!-- Step 2: Editing Section -->
+            <section id="step2" class="neon-pane p-6 md:p-8 hidden fade-in">
+                <div class="flex items-center mb-4">
+                    <div class="bg-fuchsia-500 text-white rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl mr-4 border-2 border-white/50">2</div>
+                    <div>
+                        <h2 class="text-2xl font-semibold text-white">Review & Edit Extracted Names</h2>
+                        <p class="text-slate-400">Configure, edit, and remove the extracted domains and boundaries before generating scripts.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-cyan-300 mb-2">Domain Names</h3>
+                        <div id="domain-editor" class="output-box p-2"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-cyan-300 mb-2">Boundary Names</h3>
+                        <div id="boundary-editor" class="output-box p-2"></div>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <button id="generateBtn" class="btn btn-primary w-full md:w-auto">Generate Scripts</button>
+                </div>
+            </section>
+
+            <!-- Step 3: Output/Download Section -->
+            <section id="step3" class="neon-pane p-6 md:p-8 hidden fade-in">
+                <div class="flex items-center mb-4">
+                    <div class="bg-fuchsia-500 text-white rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl mr-4 border-2 border-white/50">3</div>
+                    <div>
+                        <h2 class="text-2xl font-semibold text-white">Download Generated Scripts</h2>
+                        <p class="text-slate-400">Your `.cse` files are ready. Download them and load them into CFD Post.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                    <div id="output-color-script"></div>
+                    <div id="output-contour-script"></div>
+                </div>
+            </section>
+            
+            <!-- Step 4: Final Instructions Section -->
+            <section id="step4" class="neon-pane p-6 md:p-8 hidden fade-in">
+                 <div class="flex items-center mb-4">
+                    <div class="bg-fuchsia-500 text-white rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl mr-4 border-2 border-white/50">4</div>
+                    <div>
+                        <h2 class="text-2xl font-semibold text-white">Load Scripts into CFD Post</h2>
+                        <p class="text-slate-400">Follow these steps to run your automation scripts.</p>
+                    </div>
+                </div>
+                 <div class="prose prose-invert prose-sm text-slate-300 max-w-none bg-black/30 p-4 rounded-md border border-fuchsia-500/50">
+                    <ol>
+                        <li>In CFD Post, go to the <strong>Session</strong> menu and select <strong>Play Session...</strong>.</li>
+                        <li>Navigate to where you saved your files.</li>
+                        <li>Select the first file (`3_surface_colour_change_code.cse`) and click <strong>Open</strong>. This applies all visual properties.</li>
+                        <li>Go to <strong>Session > Play Session...</strong> again.</li>
+                        <li>Select the second file (`4_contour_creation_code.cse`) and click <strong>Open</strong>.</li>
+                        <li>Your scene, complete with plots and tables, will be automatically generated.</li>
+                    </ol>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- Global Constants & Configuration ---
+        const colorPalette = {
+            "Dark Grey": "0.333333, 0.333333, 0.498039", "Yellow": "1, 1, 0", "Light Grey": "0.784314, 0.784314, 0.784314",
+            "Cyan": "0, 1, 1", "Red": "1, 0, 0", "Green": "0, 1, 0", "Peach": "1, 0.666667, 0.498039",
+            "Blue": "0.333333, 0.333333, 1", "Magenta": "1, 0, 1", "White": "1, 1, 1", "Black": "0, 0, 0"
+        };
+        const colorReverseMap = Object.fromEntries(Object.entries(colorPalette).map(([name, rgb]) => [rgb, name]));
+
+        // --- DOM Element References ---
+        const extractBtn = document.getElementById('extractBtn');
+        const generateBtn = document.getElementById('generateBtn');
+
+        // --- Event Listeners ---
+        extractBtn.addEventListener('click', handleExtraction);
+        generateBtn.addEventListener('click', handleGeneration);
+        
+        /**
+         * Handles the initial extraction of domain and boundary names from user input.
+         */
+        function handleExtraction() {
+            const inputText = document.getElementById('inputText').value;
+            if (!inputText.trim()) { alert('Please paste your input data first.'); return; }
+            
+            try {
+                // Use regular expressions to find all DOMAIN and BOUNDARY lines
+                const domainNames = parseNames(inputText, /^\s*DOMAIN:\s*(.+)/gm);
+                const boundaryNames = parseNames(inputText, /^\s*BOUNDARY:\s*(.+)/gm);
+
+                if (domainNames.length === 0 && boundaryNames.length === 0) {
+                    alert("Extraction failed. Could not find any DOMAIN or BOUNDARY names. Please check if the pasted data is correct.");
+                    return;
+                }
+
+                // Render the interactive editors for the extracted names
+                document.getElementById('domain-editor').innerHTML = renderDomainEditor(domainNames);
+                document.getElementById('boundary-editor').innerHTML = renderBoundaryEditor(boundaryNames);
+                
+                // Reveal the next step in the UI
+                document.getElementById('step2').classList.remove('hidden');
+                document.getElementById('step3').classList.add('hidden');
+                document.getElementById('step4').classList.add('hidden');
+
+            } catch (error) {
+                console.error("An error occurred during extraction:", error);
+                alert("An error occurred during extraction. Check the console for details.");
+            }
+        }
+
+        /**
+         * Handles the generation of the final .cse scripts based on user edits.
+         */
+        function handleGeneration() {
+            const inputText = document.getElementById('inputText').value;
+            
+            // Get the current state of domains and boundaries from the UI editors
+            const domainNames = getDomainDataFromUI();
+            const boundaryNames = getBoundaryDataFromUI();
+            
+            // Generate the two separate script codes
+            const { colorData, transparencyData, code: surfaceColourCode } = generateSurfaceColourCode(inputText, boundaryNames);
+            const contourCreationCode = generateContourCode(domainNames);
+
+            // Render the output boxes with the generated scripts
+            document.getElementById('output-color-script').innerHTML = renderScriptOutput('Surface Colour Change Script', '3_surface_colour_change_code.cse', surfaceColourCode, colorData, transparencyData);
+            document.getElementById('output-contour-script').innerHTML = renderScriptOutput('Contour & Table Creation Script', '4_contour_creation_code.cse', contourCreationCode);
+            
+            // Reveal the final steps in the UI
+            document.getElementById('step3').classList.remove('hidden');
+            document.getElementById('step4').classList.remove('hidden');
+        }
+
+        /**
+         * A utility function to parse names from a block of text using a regex.
+         * @param {string} data - The input text from the user.
+         * @param {RegExp} regex - The regular expression to use for matching.
+         * @returns {string[]} An array of extracted names.
+         */
+        function parseNames(data, regex) {
+            return (data.match(regex) || []).map(line => line.trim().split(/:\s*/)[1]);
+        }
+        
+        /**
+         * Reads the current configuration of domains from the UI editor.
+         * @returns {string[]} An array of formatted domain names.
+         */
+        function getDomainDataFromUI() {
+            const domainNames = [];
+            document.querySelectorAll('.domain-row').forEach(row => {
+                const originalName = row.dataset.originalName;
+                const baseName = originalName.replace(/\s\(.*\)/, '').replace(/ ramp| offset/i, "").trim();
+                const type = row.querySelector('.domain-type-select').value;
+                const height = row.querySelector('.domain-height-input').value;
+
+                if (type === 'normal') { 
+                    domainNames.push(height && parseFloat(height) !== 0 ? `${baseName} (${height})` : baseName); 
+                } else if (type === 'offset') { 
+                    domainNames.push(`${baseName} offset`); 
+                } else if (type === 'ramp') { 
+                    domainNames.push(`${baseName} ramp`); 
+                }
+            });
+            return domainNames;
+        }
+        
+        /**
+         * Reads the current list of boundaries from the UI editor.
+         * @returns {string[]} An array of boundary names.
+         */
+        function getBoundaryDataFromUI() {
+            const boundaryNames = [];
+            document.querySelectorAll('.boundary-row').forEach(row => boundaryNames.push(row.dataset.boundaryName));
+            return boundaryNames;
+        }
+
+        /**
+         * Renders the HTML for the interactive domain editor.
+         * @param {string[]} domainNames - The initial list of domain names.
+         * @returns {string} The generated HTML string.
+         */
+        function renderDomainEditor(domainNames) {
+            return `<div class="space-y-1">${domainNames.map(rawName => {
+                let type = 'normal', height = '';
+                const match = rawName.match(/(.+)\s\((\d+\.?\d*)\)/);
+                if (match) { height = match[2]; }
+                
+                const isRamp = rawName.toLowerCase().includes('ramp');
+                const isOffset = rawName.toLowerCase().includes('offset');
+                
+                if (isRamp) type = 'ramp';
+                else if (isOffset) type = 'offset';
+                else if (match) type = 'normal';
+
+                let optionsHtml;
+                if (isRamp) {
+                    optionsHtml = `<option value="normal">Normal</option><option value="ramp" selected>Ramp</option>`;
+                } else {
+                    optionsHtml = `<option value="normal" ${!isOffset ? 'selected' : ''}>Normal</option><option value="offset" ${isOffset ? 'selected' : ''}>Offset</option>`;
+                }
+
+                return `<div class="domain-row flex items-center justify-between p-1.5 rounded-md bg-black/40" data-original-name="${rawName}">
+                           <span class="font-mono text-xs text-slate-300 mr-2 flex-1 truncate" title="${rawName}">${rawName}</span>
+                           <div class="flex items-center gap-2">
+                               <select class="control-input domain-type-select" onchange="this.parentElement.querySelector('.domain-height-input').disabled = this.value !== 'normal'">
+                                   ${optionsHtml}
+                               </select>
+                               <input type="number" step="0.1" placeholder="Height" value="${height}" class="control-input domain-height-input w-20" ${type !== 'normal' ? 'disabled' : ''}>
+                               <button class="delete-btn" onclick="this.closest('.domain-row').remove()"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                           </div>
+                         </div>`;
+            }).join('')}</div>`;
+        }
+
+        /**
+         * Renders the HTML for the interactive boundary editor.
+         * @param {string[]} boundaryNames - The initial list of boundary names.
+         * @returns {string} The generated HTML string.
+         */
+        function renderBoundaryEditor(boundaryNames) {
+            return `<div class="space-y-1">${boundaryNames.map(name => 
+                `<div class="boundary-row flex items-center justify-between p-1.5 rounded-md bg-black/40" data-boundary-name="${name}">
+                   <span class="font-mono text-xs text-slate-300 mr-2 flex-1 truncate" title="${name}">${name}</span>
+                   <button class="delete-btn" onclick="this.closest('.boundary-row').remove()"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                 </div>`
+            ).join('')}</div>`;
+        }
+
+        /**
+         * Renders an output box for a generated script.
+         * @param {string} title - The title for the output box.
+         * @param {string} filename - The name of the file for download.
+         * @param {string} code - The generated script code.
+         * @param {object[]|null} colorData - Optional data for rendering a color editor.
+         * @param {object|null} transparencyData - Optional data for transparency values.
+         * @returns {string} The generated HTML string for the output box.
+         */
+        function renderScriptOutput(title, filename, code, colorData = null, transparencyData = null) {
+            const uniqueId = `output-${filename.replace(/\./g, '_')}`;
+            const visualId = `${uniqueId}_visual`;
+            const codeId = `${uniqueId}_code`;
+            
+            let contentHtml;
+            let headerControls = `<button class="btn btn-secondary text-xs" onclick="downloadFile('${filename}', '${codeId}')">Download .cse</button>`;
+
+            if (colorData) {
+                const visualContent = renderColorEditor(colorData, transparencyData);
+                headerControls = `<button class="btn btn-secondary text-xs" onclick="toggleView('${visualId}', '${codeId}', this)">Show Code</button>` + headerControls;
+                contentHtml = `<div id="${visualId}" class="output-box p-2">${visualContent}</div>
+                               <pre id="${codeId}" class="output-box hidden">${code}</pre>`;
+            } else {
+                contentHtml = `<pre id="${codeId}" class="output-box">${code}</pre>`;
+            }
+
+            return `<h3 class="text-lg font-semibold text-cyan-300 mb-2">${title}</h3>
+                    <div class="flex justify-end mb-2 gap-2">${headerControls}</div>
+                    ${contentHtml}`;
+        }
+        
+        /**
+         * Renders the visual color and transparency editor inside the output box.
+         * @param {object[]} colorData - Array of objects with boundary and rgb info.
+         * @param {object} transparencyData - Map of boundary names to transparency values.
+         * @returns {string} The generated HTML string.
+         */
+        function renderColorEditor(colorData, transparencyData) {
+            const optionsHtml = Object.entries(colorPalette).map(([name, rgb]) => `<option value="${rgb}">${name}</option>`).join('');
+            return `<div class="space-y-1">${colorData.map(({ boundary, rgb }) => {
+                const [r, g, b] = rgb.split(',').map(c => Math.round(parseFloat(c) * 255));
+                const cssColor = `rgb(${r}, ${g}, ${b})`;
+                const transparencyValue = transparencyData[boundary] || '0.0';
+                return `<div class="flex items-center justify-between p-1.5 rounded-md bg-black/40">
+                           <span class="font-mono text-xs text-slate-300 mr-2 flex-1 truncate" title="${boundary}">${boundary}</span>
+                           <div class="flex items-center gap-2">
+                               <div class="w-4 h-4 rounded-sm border border-fuchsia-500/50 color-swatch" style="background-color: ${cssColor};"></div>
+                               <select class="control-input color-select" data-boundary-name="${boundary}" onchange="this.parentElement.querySelector('.color-swatch').style.backgroundColor = 'rgb(' + this.value.split(',').map(c=>Math.round(parseFloat(c)*255)).join(',') + ')'">${optionsHtml.replace(`value="${rgb}"`, `value="${rgb}" selected`)}</select>
+                               <input type="number" min="0" max="1" step="0.05" value="${transparencyValue}" class="control-input transparency-input" data-boundary-name="${boundary}">
+                           </div>
+                         </div>`;
+            }).join('')}</div>`;
+        }
+
+        /**
+         * Toggles between the visual editor and the raw code view in the output box.
+         * @param {string} visualId - The ID of the visual editor container.
+         * @param {string} codeId - The ID of the code container.
+         * @param {HTMLElement} button - The button element that was clicked.
+         */
+        function toggleView(visualId, codeId, button) {
+            const visualEl = document.getElementById(visualId), codeEl = document.getElementById(codeId);
+            const isShowingVisuals = !visualEl.classList.contains('hidden');
+            if (isShowingVisuals) {
+                // Before showing code, regenerate it to reflect any changes made in the visual editor
+                const inputText = document.getElementById('inputText').value;
+                const boundaryNames = getBoundaryDataFromUI();
+                const colorOverrides = {}, transparencyOverrides = {};
+                document.querySelectorAll('#output-color-script .color-select').forEach(s => { colorOverrides[s.dataset.boundaryName] = s.value; });
+                document.querySelectorAll('#output-color-script .transparency-input').forEach(i => { transparencyOverrides[i.dataset.boundaryName] = i.value; });
+                const { code } = generateSurfaceColourCode(inputText, boundaryNames, colorOverrides, transparencyOverrides);
+                codeEl.textContent = code;
+                visualEl.classList.add('hidden'); codeEl.classList.remove('hidden'); button.textContent = 'Show Visuals';
+            } else {
+                visualEl.classList.remove('hidden'); codeEl.classList.add('hidden'); button.textContent = 'Show Code';
+            }
+        }
+
+        /**
+         * Triggers a browser download for the generated script content.
+         * @param {string} filename - The desired name for the downloaded file.
+         * @param {string} codeElementId - The ID of the element containing the code to download.
+         */
+        function downloadFile(filename, codeElementId) {
+            let content;
+            // If it's the color script, regenerate it from the UI to capture the latest edits
+            if (filename === '3_surface_colour_change_code.cse') {
+                const inputText = document.getElementById('inputText').value;
+                const boundaryNames = getBoundaryDataFromUI();
+                const colorOverrides = {}, transparencyOverrides = {};
+                document.querySelectorAll('#output-color-script .color-select').forEach(s => { colorOverrides[s.dataset.boundaryName] = s.value; });
+                document.querySelectorAll('#output-color-script .transparency-input').forEach(i => { transparencyOverrides[i.dataset.boundaryName] = i.value; });
+                const { code } = generateSurfaceColourCode(inputText, boundaryNames, colorOverrides, transparencyOverrides);
+                content = code;
+            } else {
+                content = document.getElementById(codeElementId).textContent;
+            }
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /**
+         * Generates the surface color and transparency script.
+         * @param {string} inputText - The original user input text.
+         * @param {string[]} boundaryNames - The list of boundary names to process.
+         * @param {object} colorOverrides - A map of boundary names to new color values.
+         * @param {object} transparencyOverrides - A map of boundary names to new transparency values.
+         * @returns {object} An object containing color data, transparency data, and the final script code.
+         */
+        function generateSurfaceColourCode(inputText, boundaryNames, colorOverrides = {}, transparencyOverrides = {}) {
+            // Define generic regex patterns to categorize boundaries
+            const patterns = {
+                boundary_obstacle: /\s*obstacle\s*/i,
+                boundary_source: /\s*source\s*/i,
+                boundary_ceiling: /\s*ceiling\s*/i,
+                boundary_floor: /\s*floor\s*/i,
+                boundary_ground: /\s*ground\s*/i,
+                boundary_columns: /\s*columns\s*/i,
+                boundary_wall: /\s*wall\s*/i,
+                boundary_inclined_top: /\s*inclined\s*top\s*/i,
+                boundary_inclined_bottom: /\s*inclined\s*bottom\s*/i,
+                boundary_inclined_side: /\s*inclined\s*side\s*/i,
+                boundary_inclined_opening: /\s*inclined\s*opening\s*/i,
+                boundary_ducting: /\s*ducting\s*/i,
+                boundary_exhaust: /\s*exhaust\s*/i,
+                boundary_supply: /\s*supply\s*/i,
+                boundary_vent: /\s*vent\s*/i,
+                boundary_opening: /\s*opening\s*/i,
+                boundary_fan: /\s*fan\s*/i,
+                boundary_inlet: /\s*inlet\s*/i,
+                boundary_outlet: /\s*outlet\s*/i
+            };
+            const boundaryDict = Object.keys(patterns).reduce((acc, key) => ({ ...acc, [key]: [] }), {});
+            for (const line of boundaryNames) {
+                for (const [category, pattern] of Object.entries(patterns)) {
+                    if (pattern.test(line)) { boundaryDict[category].push(line); }
+                }
+            }
+            // Define default colors for each generic category
+            const boundaryGroups = {
+                "boundary_obstacle": [colorPalette["Dark Grey"], boundaryDict["boundary_obstacle"]],
+                "boundary_source": [colorPalette["Yellow"], boundaryDict["boundary_source"]],
+                "boundary_ceiling": [colorPalette["Light Grey"], boundaryDict["boundary_ceiling"]],
+                "boundary_floor": [colorPalette["Light Grey"], boundaryDict["boundary_floor"]],
+                "boundary_ground": [colorPalette["Light Grey"], boundaryDict["boundary_ground"]],
+                "boundary_columns": [colorPalette["Light Grey"], boundaryDict["boundary_columns"]],
+                "boundary_wall": [colorPalette["Light Grey"], boundaryDict["boundary_wall"]],
+                "boundary_inclined_top": [colorPalette["Light Grey"], boundaryDict["boundary_inclined_top"]],
+                "boundary_inclined_bottom": [colorPalette["Light Grey"], boundaryDict["boundary_inclined_bottom"]],
+                "boundary_inclined_side": [colorPalette["Light Grey"], boundaryDict["boundary_inclined_side"]],
+                "boundary_inclined_opening": [colorPalette["Cyan"], boundaryDict["boundary_inclined_opening"]],
+                "boundary_exhaust": [colorPalette["Red"], boundaryDict["boundary_exhaust"]],
+                "boundary_supply": [colorPalette["Green"], boundaryDict["boundary_supply"]],
+                "boundary_ducting": [colorPalette["Peach"], boundaryDict["boundary_ducting"]],
+                "boundary_vent": [colorPalette["Blue"], boundaryDict["boundary_vent"]],
+                "boundary_opening": [colorPalette["Blue"], boundaryDict["boundary_opening"]],
+                "boundary_fan": [colorPalette["Magenta"], boundaryDict["boundary_fan"]],
+                "boundary_inlet": [colorPalette["Magenta"], boundaryDict["boundary_inlet"]],
+                "boundary_outlet": [colorPalette["Red"], boundaryDict["boundary_outlet"]]
+            };
+            // Define default transparency for specific categories
+            const defaultTransparency = {};
+            boundaryDict["boundary_vent"].forEach(name => defaultTransparency[name] = "0.25");
+            boundaryDict["boundary_inclined_opening"].forEach(name => defaultTransparency[name] = "0.25");
+            boundaryDict["boundary_opening"].forEach(name => defaultTransparency[name] = "0.25");
+            
+            let boundaryCode = "";
+            const colorData = [], transparencyData = {};
+            
+            // Build the script string, applying overrides if they exist
+            for (const [, [defaultColor, boundaries]] of Object.entries(boundaryGroups)) {
+                for (const name of boundaries) {
+                    const colorCode = colorOverrides[name] || defaultColor;
+                    const transparency = transparencyOverrides[name] || defaultTransparency[name];
+                    boundaryCode += `BOUNDARY:${name}\n  Colour = ${colorCode}\n`;
+                    colorData.push({ boundary: name, rgb: colorCode });
+                    if (transparency && parseFloat(transparency) > 0) {
+                        boundaryCode += `  Transparency = ${transparency}\n`;
+                        transparencyData[name] = transparency;
+                    }
+                    boundaryCode += "END\n";
+                }
+            }
+            
+            // Extract the case name from the original input to create the header
+            const lines = inputText.split('\n');
+            const secondLine = lines.length > 1 ? lines[1].trim() : '';
+            const caseName = secondLine.split(' ').slice(1).join(' ').trim();
+            const formattedCaseName = `CASE:${caseName}`;
+            const header = `# To avoid unnecessary file pre-processing and modifications, include\n# COMMAND FILE at the top of your session file.\n# If it is not included, the file is assumed to be older and will be\n# modified for backward compatibility.\nCOMMAND FILE:\n  CFX Post Version = 22.2\nEND\n\n\nDATA READER:\n  ${formattedCaseName}\n\n`;
+            
+            return { colorData, transparencyData, code: header + boundaryCode };
+        }
+
+        /**
+         * Generates the contour, plot, and table creation script.
+         * @param {string[]} domainNames - The final list of configured domain names.
+         * @returns {string} The complete script code as a string.
+         */
+        function generateContourCode(domainNames) {
+            const planeDetails = [];
+            for (let line of domainNames) {
+                line = line.trim();
+                if (!line) continue;
+                const match = line.match(/(.+)\s\((\d+\.?\d*)\)/);
+                const isSpecial = /ramp|offset/i.test(line);
+                if (match) {
+                    planeDetails.push({ name: match[1].trim(), zValue: parseFloat(match[2]), isSpecial: isSpecial });
+                } else {
+                    planeDetails.push({ name: line.trim(), zValue: 0.0, isSpecial: isSpecial });
+                }
+            }
+
+            // Define multi-line string templates for different script sections
+            const templates = {
+                header: `# To avoid unnecessary file pre-processing and modifications, include\n# COMMAND FILE at the top of your session file.\n# If it is not included, the file is assumed to be older and will be\n# modified for backward compatibility.\nCOMMAND FILE:\n  CFX Post Version = 22.2\nEND\n\n`,
+                plane_template: (p) => `PLANE:${p.name} plane\n  Apply Instancing Transform = On\n  Apply Texture = Off\n  Blend Texture = On\n  Bound Radius = 0.5 [m]\n  Colour = 0.75, 0.75, 0.75\n  Colour Map = Default Colour Map\n  Colour Mode = Constant\n  Colour Scale = Linear\n  Colour Variable = X\n  Colour Variable Boundary Values = Conservative\n  Culling Mode = No Culling\n  Direction 1 Bound = 1.0 [m]\n  Direction 1 Orientation = 0 [degree]\n  Direction 1 Points = 10\n  Direction 2 Bound = 1.0 [m]\n  Direction 2 Points = 10\n  Domain List = ${p.name.replace(/\s\(\d+\.?\d*\)/, '')}\n  Draw Contours = Off\n  Draw Faces = On\n  Draw Lines = Off\n  Instancing Transform = /DEFAULT INSTANCE TRANSFORM:Default Transform\n  Invert Plane Bound = Off\n  Lighting = On\n  Line Colour = 0, 0, 0\n  Line Colour Mode = Default\n  Line Width = 1\n  Max = 0.0\n  Min = 0.0\n  Normal = 1 , 0 , 0\n  Number of Contours = 11\n  Option = XY Plane\n  Plane Bound = None\n  Plane Type = Slice\n  Point = 0 [m], 0 [m], 0 [m]\n  Point 1 = 0 [m], 0 [m], 0 [m]\n  Point 2 = 1 [m], 0 [m], 0 [m]\n  Point 3 = 0 [m], 1 [m], 0 [m]\n  Range = Global\n  Render Edge Angle = 0 [degree]\n  Specular Lighting = On\n  Surface Drawing = Smooth Shading\n  Texture Angle = 0\n  Texture Direction = 0 , 1 , 0\n  Texture File =\n  Texture Material = Metal\n  Texture Position = 0 , 0\n  Texture Scale = 1\n  Texture Type = Predefined\n  Tile Texture = Off\n  Transform Texture = Off\n  Transparency = 0.0\n  X = 0.0 [m]\n  Y = 0.0 [m]\n  Z = ${p.zValue} [m]\n  OBJECT VIEW TRANSFORM:\n    Apply Reflection = Off\n    Apply Rotation = Off\n    Apply Scale = Off\n    Apply Translation = Off\n    Principal Axis = Z\n    Reflection Plane Option = XY Plane\n    Rotation Angle = 0.0 [degree]\n    Rotation Axis From = 0 [m], 0 [m], 0 [m]\n    Rotation Axis To = 0 [m], 0 [m], 0 [m]\n    Rotation Axis Type = Principal Axis\n    Scale Vector = 1 , 1 , 1\n    Translation Vector = 0 [m], 0 [m], 0 [m]\n    X = 0.0 [m]\n    Y = 0.0 [m]\n    Z = 0.0 [m]\n  END\nEND\n\n`,
+                surface_template: (p, domain_for_list) => `USER SURFACE:${p.name} plane\n  Apply Instancing Transform = On\n  Apply Rotation = On\n  Apply Scale = On\n  Apply Texture = Off\n  Apply Translation = Off\n  Associated Boundary = default surface 1\n  Associated Boundary Specified = On\n  Blend Texture = On\n  Colour = 0.75, 0.75, 0.75\n  Colour Map = Default Colour Map\n  Colour Mode = Constant\n  Colour Scale = Linear\n  Colour Variable = X\n  Colour Variable Boundary Values = Conservative\n  Contour Level = 1\n  Culling Mode = No Culling\n  Domain List = ${domain_for_list}\n  Draw Contours = Off\n  Draw Faces = On\n  Draw Lines = Off\n  File Units = m\n  Input File =\n  Instancing Transform = /DEFAULT INSTANCE TRANSFORM:Default Transform\n  Lighting = On\n  Line Colour = 0, 0, 0\n  Line Colour Mode = Default\n  Line Width = 1\n  Maintain Conservative Values = Off\n  Max = 0.0\n  Min = 0.0\n  Number of Contours = 11\n  Offset Direction = 0 , 0 , 1\n  Offset Distance = 1.6 [m]\n  Offset Mode = Uniform\n  Offset Type = Translational\n  Offset Variable = X\n  Option = Offset From Surface\n  Principal Axis = Z\n  Range = Global\n  Render Edge Angle = 0 [degree]\n  Rotation Angle = 0 [degree]\n  Rotation Axis From = 0 [m], 0 [m], 0 [m]\n  Rotation Axis To = 1 [m], 0 [m], 0 [m]\n  Rotation Axis Type = Principal Axis\n  Scale Factor = 1.0\n  Specular Lighting = On\n  Surface Drawing = Smooth Shading\n  Surface Name = ${p.name.replace(' offset', '')} base_surface\n  Texture Angle = 0\n  Texture Direction = 0 , 1 , 0\n  Texture File =\n  Texture Material = Metal\n  Texture Position = 0 , 0\n  Texture Scale = 1\n  Texture Type = Predefined\n  Tile Texture = Off\n  Transparency = 0.0\nEND\n\n`,
+                surface_group_template: (group_name, location_list) => `SURFACE GROUP:${group_name} combined\n  Apply Instancing Transform = On\n  Apply Texture = Off\n  Blend Texture = On\n  Colour = 0.75, 0.75, 0.75\n  Colour Map = Default Colour Map\n  Colour Mode = Constant\n  Colour Scale = Linear\n  Colour Variable = X\n  Colour Variable Boundary Values = Conservative\n  Culling Mode = No Culling\n  Domain List = /DOMAIN GROUP:All Domains\n  Draw Contours = Off\n  Draw Faces = On\n  Draw Lines = Off\n  Instancing Transform = /DEFAULT INSTANCE TRANSFORM:Default Transform\n  Lighting = On\n  Line Colour = 0, 0, 0\n  Line Colour Mode = Default\n  Line Width = 1\n  Location List = ${location_list.join(',')}\n  Max = 0.0\n  Min = 0.0\n  Number of Contours = 11\n  Range = Global\n  Render Edge Angle = 0 [degree]\n  Specular Lighting = On\n  Surface Drawing = Smooth Shading\n  Texture Angle = 0\n  Texture Direction = 0 , 1 , 0\n  Texture File =\n  Texture Material = Metal\n  Texture Position = 0 , 0\n  Texture Scale = 1\n  Texture Type = Predefined\n  Tile Texture = Off\n  Transform Texture = Off\n  Transparency = 0.0\n  OBJECT VIEW TRANSFORM:\n    Apply Reflection = Off\n    Apply Rotation = Off\n    Apply Scale = Off\n    Apply Translation = Off\n  END\nEND\n\n`,
+                velocity_contour_template: (plane_name) => `CONTOUR:Velocity Contour\n  Apply Instancing Transform = On\n  Clip Contour = Off\n  Colour Map = Default Colour Map\n  Colour Scale = Linear\n  Colour Variable = Velocity\n  Colour Variable Boundary Values = Conservative\n  Constant Contour Colour = Off\n  Contour Range = Global\n  Culling Mode = No Culling\n  Domain List = /DOMAIN GROUP:All Domains\n  Draw Contours = On\n  Font = Sans Serif\n  Fringe Fill = On\n  Instancing Transform = /DEFAULT INSTANCE TRANSFORM:Default Transform\n  Lighting = On\n  Line Colour = 0, 0, 0\n  Line Colour Mode = Default\n  Line Width = 1\n  Location List = /SURFACE GROUP:${plane_name} combined\n  Max = 0.0 [m s^-1]\n  Min = 0.0 [m s^-1]\n  Number of Contours = 11\n  Show Numbers = Off\n  Specular Lighting = On\n  Surface Drawing = Smooth Shading\n  Text Colour = 0, 0, 0\n  Text Colour Mode = Default\n  Text Height = 0.024\n  Transparency = 0.25\n  Use Face Values = Off\n  Value List = 0 [m s^-1],1 [m s^-1]\n  OBJECT VIEW TRANSFORM:\n    Apply Reflection = Off\n    Apply Rotation = Off\n    Apply Scale = Off\n    Apply Translation = Off\n    Principal Axis = Z\n    Reflection Plane Option = XY Plane\n    Rotation Angle = 0.0 [degree]\n    Rotation Axis From = 0 [m], 0 [m], 0 [m]\n    Rotation Axis To = 0 [m], 0 [m], 0 [m]\n    Rotation Axis Type = Principal Axis\n    Scale Vector = 1 , 1 , 1\n    Translation Vector = 0 [m], 0 [m], 0 [m]\n    X = 0.0 [m]\n    Y = 0.0 [m]\n    Z = 0.0 [m]\n  END\nEND\n\n`,
+                velocity_legend_template: `LEGEND:Velocity Legend\n  Colour = 0, 0, 0\n  Font = Sans Serif\n  Legend Aspect = 0.07\n  Legend Format = %4.1f\n  Legend Orientation = Vertical\n  Legend Plot = /CONTOUR:Velocity Contour\n  Legend Position = 0.02 , 0.15\n  Legend Size = 0.6\n  Legend Ticks = 7\n  Legend Title = Velocity (m/s)\n  Legend Title Mode = User Specified\n  Legend X Justification = Right\n  Legend Y Justification = Top\n  Show Legend Units = Off\n  Text Colour Mode = Default\n  Text Height = 0.024\n  Text Rotation = 0\nEND\n`,
+                velocity_vector_template: (plane_name) => `VECTOR:Velocity vector\n  Apply Instancing Transform = On\n  Colour = 1.0, 1.0, 1.0\n  Colour Map = Default Colour Map\n  Colour Mode = Constant\n  Colour Scale = Linear\n  Colour Variable = Velocity\n  Colour Variable Boundary Values = Conservative\n  Coord Frame = Global\n  Culling Mode = No Culling\n  Direction = X\n  Domain List = /DOMAIN GROUP:All Domains\n  Draw Faces = On\n  Draw Lines = Off\n  Instancing Transform = /DEFAULT INSTANCE TRANSFORM:Default Transform\n  Lighting = On\n  Line Width = 1\n  Location List = /SURFACE GROUP:${plane_name} combined\n  Locator Sampling Method = Rectangular Grid\n  Max = 0.0 [m s^-1]\n  Maximum Number of Items = 100\n  Min = 0.0 [m s^-1]\n  Normalized = Off\n  Number of Samples = 100\n  Projection Type = Tangential\n  Random Seed = 1\n  Range = Global\n  Reduction Factor = 1.0\n  Reduction or Max Number = Reduction\n  Sample Spacing = 0.015\n  Sampling Aspect Ratio = 1\n  Sampling Grid Angle = 0 [degree]\n  Specular Lighting = On\n  Surface Drawing = Smooth Shading\n  Symbol = Line Arrow\n  Symbol Size = 10\n  Transparency = 0.0\n  Variable = Velocity\n  Variable Boundary Values = Conservative\n  OBJECT VIEW TRANSFORM:\n    Apply Reflection = Off\n    Apply Rotation = Off\n    Apply Scale = Off\n    Apply Translation = Off\n  END\nEND\n\n`
+            };
+            
+            let commandFileContent = templates.header;
+            
+            // Create planes and surfaces based on domain data
+            planeDetails.forEach(p => {
+                if (!p.isSpecial) {
+                    commandFileContent += templates.plane_template(p);
+                } else {
+                    let domainForList = /offset/i.test(p.name) ? p.name.replace(/ offset/i, "").trim() : p.name;
+                    commandFileContent += templates.surface_template(p, domainForList);
+                }
+            });
+
+            // Group planes and surfaces for plotting
+            const structuredPlanes = {};
+            planeDetails.forEach(p => {
+                const baseName = p.name.replace(/ ramp| offset/i, "").trim();
+                if (!structuredPlanes[baseName]) {
+                    structuredPlanes[baseName] = { z: 0, special: [], hasPlane: false };
+                }
+                if (!p.isSpecial) {
+                    structuredPlanes[baseName].z = p.zValue;
+                    structuredPlanes[baseName].hasPlane = true;
+                } else {
+                    structuredPlanes[baseName].special.push(p.name);
+                }
+            });
+            
+            let lastBaseNameForPlotting = "";
+            Object.entries(structuredPlanes).forEach(([baseName, details]) => {
+                const hasNormalPlane = details.hasPlane;
+                const hasSpecialPlanes = details.special.length > 0;
+                
+                if (hasNormalPlane || hasSpecialPlanes) {
+                    lastBaseNameForPlotting = baseName;
+                    const locationList = [];
+                    if(hasNormalPlane) {
+                        locationList.push(`/PLANE:${baseName} plane`);
+                    }
+                    details.special.forEach(s => {
+                        locationList.push(`/USER SURFACE:${s} plane`);
+                    });
+                    commandFileContent += templates.surface_group_template(baseName, locationList);
+                }
+            });
+
+            // Add contours, legends, and vectors for the last relevant plane group
+            if (lastBaseNameForPlotting) {
+                commandFileContent += templates.velocity_contour_template(lastBaseNameForPlotting);
+                commandFileContent += templates.velocity_legend_template;
+                commandFileContent += templates.velocity_vector_template(lastBaseNameForPlotting);
+            }
+
+            return commandFileContent;
+        }
+
+    </script>
+</body>
+</html>
+
