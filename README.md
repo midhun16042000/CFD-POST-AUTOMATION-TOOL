@@ -6,7 +6,7 @@ A web-based utility to automate the generation of visualization scripts for ANSY
 
 ## Key Links
 
-* **[Live Demo](https://your-username.github.io/your-repository-name/)** * **[View Source Code (`index.html`)](https://github.com/midhun16042000/CFD-POST-AUTOMATION-TOOL/blob/main/index.html)**
+**[View Source Code (`index.html`)](https://github.com/midhun16042000/CFD-POST-AUTOMATION-TOOL/blob/main/index.html)**
 
 ## The Problem: Tedious & Repetitive Workflows
 
